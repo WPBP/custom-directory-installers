@@ -101,14 +101,49 @@ abstract class BaseInstaller
      */
     protected function templatePath($path, array $vars = array())
     {
-        if (strpos($path, '{') !== false) {
-            extract($vars);
-            preg_match_all('@\{\$([A-Za-z0-9_]*)\}@i', $path, $matches);
-            if (!empty($matches[1])) {
-                foreach ($matches[1] as $var) {
-                    $path = str_replace('{$' . $var . '}', $$var, $path);
-                }
-            }
+        //Extracted from https://github.com/ideaconnect/composer-custom-directory
+        if ( $matched = preg_match_all( "/\{(.*?)\}/is", $path, $matches, PREG_PATTERN_ORDER ) ) {
+        	$packageParts = explode( '/', $vars['vendor'].'/'.$vars['name'] );
+        	foreach ( $matches[ 1 ] as $pattern ) {
+        	  $patternParts = explode( '|', $pattern );
+        	  $flags = array();
+        	  if ( count( $patternParts ) > 1 ) {
+        	    $flags = str_split( $patternParts[ 1 ] );
+        	  }
+        	  switch ( $patternParts[ 0 ] ) {
+        	    case '$package':
+        		$value = $vars['vendor'].'/'.$vars['name'];
+        		break;
+        	    case '$name':
+        		if ( count( $packageParts ) > 1 ) {
+        		  $value = $packageParts[ 1 ];
+        		} else {
+        		  $value = 'undefined';
+        		}
+        		break;
+        	    case '$vendor':
+        		if ( count( $packageParts ) > 1 ) {
+        		  $value = $packageParts[ 0 ];
+        		} else {
+        		  $value = 'undefined';
+        		}
+        		break;
+        	  }
+        	  foreach ( $flags as $flag ) {
+        	    switch ( $flag ) {
+        		case 'F':
+        		  $value = ucfirst( $value );
+        		  break;
+        		case 'P':
+        		  $value = preg_replace_callback( '/[_\-]([a-zA-Z])/', function ($matches) {
+        		    return strtoupper( $matches[ 1 ] );
+        		  }, $value );
+        		  break;
+        	    }
+        	  }
+        
+        	  $path = str_replace( '{' . $pattern . '}', $value, $path );
+        	}
         }
 
         return $path;
