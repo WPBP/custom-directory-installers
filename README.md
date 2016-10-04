@@ -13,7 +13,7 @@ Decalre your `"composer/installers": "1.1.0"` as usually but add:
       "url": "https://github.com/WPBP/installers",
       "type": "vcs"
     },
-}
+]
 ```
 
 In that way the packages that require in their composer.json don't annoying you but the dynamic paths system of [ideaconnect/composer-custom-directory](https://github.com/ideaconnect/composer-custom-directory) will works also with them.
